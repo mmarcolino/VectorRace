@@ -4,33 +4,85 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 from point import Point
 from vector import Vector
 from plan import Plan
 
+import numpy as np  # Necessário para trabalhar com arrays numéricos
+
+# Função para desenhar a pista de corrida personalizada
+def desenhar_pista(ax):
+    # Coordenadas da pista
+    pista_x = []
+    pista_y = []
+
+    # 1. Reta inicial a partir de (0,0) até (0,5)
+    pista_x.extend([0, 0])
+    pista_y.extend([0, 5])
+
+    # 2.  Pequena reta de (0,5) até (10,10)
+    pista_x.extend([0, 5])
+    pista_y.extend([10, 10])
+
+    # 3. Pequena reta de (10,10) até (10,-5)
+    pista_x.extend([10, 10])
+    pista_y.extend([10, -5])
+
+
+    # 4. Curva final retornando ao ponto de largada (0,0)
+    angulos2 = np.linspace(0, np.pi, 100)
+    raio2 = 5
+    centro_x2 = 5
+    centro_y2 = -5
+    curva_x3 = centro_x2 + raio2 * np.cos(angulos2)
+    curva_y3 = centro_y2 - raio2 * np.sin(angulos2)
+    pista_x.extend(curva_x3)
+    pista_y.extend(curva_y3)
+
+    # Fechar a pista conectando ao ponto inicial
+    pista_x.append(0)
+    pista_y.append(0)
+
+    # Desenhar a pista
+    ax.plot(pista_x, pista_y, color='gray', linewidth=20, solid_capstyle='round', zorder=1)
+
+    # Adicionar linha central para indicar o caminho
+    ax.plot(pista_x, pista_y, color='white', linewidth=2, linestyle='--', zorder=2)
+
+    # Adicionar a linha de largada no ponto (0,0)
+    ax.plot([-0.5, 0.5], [0, 0], color='black', linewidth=5)
+
 def desenhar_pontos(pontos):
     fig, ax = plt.subplots()
-    ax.set_xlim(-10, 10)
-    ax.set_ylim(-10, 10)
-    ax.axhline(0, color='black')
-    ax.axvline(0, color='black')
+    ax.set_xlim(-5, 25)
+    ax.set_ylim(-15, 15)
+    ax.set_aspect('equal')  # Manter a proporção dos eixos
+    ax.axis('off')  # Opcional: remover os eixos para destacar a pista
 
+    # Desenhar a pista de corrida
+    desenhar_pista(ax)
+
+    # Plotar pontos
     for ponto in pontos:
         ax.plot(ponto.x, ponto.y, 'bo')  # pontos azuis
         label = f'{ponto.name}({ponto.x}, {ponto.y})' if ponto.name else f'({ponto.x}, {ponto.y})'
-        ax.text(ponto.x + 0.1, ponto.y + 0.1, label)
+        ax.text(ponto.x + 0.5, ponto.y + 0.5, label)
 
-    plt.grid(True)
-    plt.title("Plano de Pontos")
+    plt.title("Plano de Pontos com Pista de Corrida")
     plt.show()
 
 def desenhar_vetores(vetores):
     fig, ax = plt.subplots()
-    ax.set_xlim(-10, 10)
-    ax.set_ylim(-10, 10)
-    ax.axhline(0, color='black')
-    ax.axvline(0, color='black')
+    ax.set_xlim(-5, 25)
+    ax.set_ylim(-15, 15)
+    ax.set_aspect('equal')  # Manter a proporção dos eixos
+    ax.axis('off')  # Opcional: remover os eixos para destacar a pista
 
+    # Desenhar a pista de corrida
+    desenhar_pista(ax)
+
+    # Plotar vetores
     for vetor in vetores:
         ax.quiver(vetor.ponto_a.x, vetor.ponto_a.y,
                   vetor.ponto_b.x - vetor.ponto_a.x,
@@ -42,33 +94,33 @@ def desenhar_vetores(vetores):
         label = vetor.name if vetor.name else ''
         ax.text(mid_x, mid_y, label)
 
-    plt.grid(True)
-    plt.title("Plano de Vetores")
+    plt.title("Plano de Vetores com Pista de Corrida")
     plt.show()
 
 def desenhar_pontos_vetores(pontos, vetores):
     fig, ax = plt.subplots()
-    ax.set_xlim(-10, 10)
-    ax.set_ylim(-10, 10)
-    ax.axhline(0, color='black')
-    ax.axvline(0, color='black')
+    ax.set_xlim(-5, 25)
+    ax.set_ylim(-15, 15)
+    ax.set_aspect('equal')  # Manter a proporção dos eixos
+    ax.axis('off')  # Opcional: remover os eixos para destacar a pista
+
+    # Desenhar a pista de corrida
+    desenhar_pista(ax)
 
     # Plotar pontos
     for ponto in pontos:
         ax.plot(ponto.x, ponto.y, 'bo')  # pontos azuis
         label = f'{ponto.name}({ponto.x}, {ponto.y})' if ponto.name else f'({ponto.x}, {ponto.y})'
-        ax.text(ponto.x + 0.1, ponto.y + 0.1, label)
+        ax.text(ponto.x + 0.5, ponto.y + 0.5, label)
 
     # Plotar vetores
     for vetor in vetores:
-        # Vetores a partir da origem (0,0)
         ax.quiver(0, 0, vetor.ponto_b.x, vetor.ponto_b.y, angles='xy', scale_units='xy', scale=1, color='r')
         # Exibir o nome do vetor próximo à sua extremidade
         label = vetor.name if vetor.name else ''
         ax.text(vetor.ponto_b.x, vetor.ponto_b.y, label)
 
-    plt.grid(True)
-    plt.title("Plano de Pontos e Vetores")
+    plt.title("Plano de Pontos e Vetores com Pista de Corrida")
     plt.show()
 
 def main():
