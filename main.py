@@ -11,6 +11,53 @@ from plan import Plan
 
 import numpy as np  # Necessário para trabalhar com arrays numéricos
 
+# Adicionar o Canvas para o plano cartesiano
+canvas_width = 400
+canvas_height = 400
+
+class Canvas:
+    def __init__(self, plano):
+        self.plano = plano
+
+
+def criar_canvas(aba):
+        canvas = tk.Canvas(aba, width=canvas_width, height=canvas_height, bg='white')
+        canvas.pack(expand=True, fill='both')
+        desenhar_plano_cartesiano(canvas)
+        return canvas
+
+def desenhar_plano_cartesiano(canvas):
+    # Limpar o canvas
+    canvas.delete("all")
+    
+    # Desenhar os eixos
+    mid_x = canvas_width / 2
+    mid_y = canvas_height / 2
+    scale = 20  # Escala para o plano de 6x6
+
+    # Eixo X
+    canvas.create_line(0, mid_y, canvas_width, mid_y, fill='black', width=2)
+    # Eixo Y
+    canvas.create_line(mid_x, 0, mid_x, canvas_height, fill='black', width=2)
+
+    # Linhas de grade e marcas
+    for i in range(-6, 7):
+        if i != 0:
+            # Linhas verticais
+            canvas.create_line(mid_x + i * scale, 0, mid_x + i * scale, canvas_height, fill='lightgray')
+            # Linhas horizontais
+            canvas.create_line(0, mid_y - i * scale, canvas_width, mid_y - i * scale, fill='lightgray')
+
+    # Marcas nos eixos
+    for i in range(-6, 7):
+        if i != 0:
+            canvas.create_text(mid_x + i * scale, mid_y + 10, text=str(i), fill='black')
+            canvas.create_text(mid_x + 10, mid_y - i * scale, text=str(i), fill='black')
+
+    # Desenhar o ponto (0,0)
+    canvas.create_oval(mid_x - 5, mid_y - 5, mid_x + 5, mid_y + 5, fill='black')
+    
+
 # Função para desenhar a pista de corrida personalizada
 def desenhar_pista(ax):
     # Coordenadas da pista
@@ -144,129 +191,16 @@ def main():
     notebook.pack(expand=1, fill='both')
 
     # Criar frames para cada aba
-    frame_pontos = tk.Frame(notebook)
-    frame_vetores = tk.Frame(notebook)
     frame_pontos_vetores = tk.Frame(notebook)
 
-    notebook.add(frame_pontos, text="Pontos")
-    notebook.add(frame_vetores, text="Vetores")
     notebook.add(frame_pontos_vetores, text="Pontos e Vetores")
+    
+    #pv
+    canvas_pontos_pv = Canvas(criar_canvas(frame_pontos_vetores))
+    indices_pontos_canvas_pv = []
+    canvas_vetores_pv = Canvas(criar_canvas(frame_pontos_vetores))
+    indices_vetores_canvas_pv = []
 
-    # ------------------- Aba de Pontos ------------------- #
-    # Frames para inputs e lista
-    frame_pontos_main = tk.Frame(frame_pontos)
-    frame_pontos_main.pack(expand=1, fill='both')
-
-    frame_pontos_inputs = tk.Frame(frame_pontos_main)
-    frame_pontos_inputs.pack(side='left', fill='both', expand=True, padx=10, pady=10)
-
-    frame_pontos_lista = tk.Frame(frame_pontos_main)
-    frame_pontos_lista.pack(side='right', fill='both', expand=True, padx=10, pady=10)
-
-    # Inputs para Pontos
-    label_ponto = tk.Label(frame_pontos_inputs, text="Adicionar/Editar Ponto")
-    label_ponto.pack()
-
-    label_nome_ponto = tk.Label(frame_pontos_inputs, text="Nome do Ponto:")
-    label_nome_ponto.pack()
-    entry_nome_ponto = tk.Entry(frame_pontos_inputs)
-    entry_nome_ponto.pack()
-
-    label_x = tk.Label(frame_pontos_inputs, text="Coordenada x:")
-    label_x.pack()
-    entry_x = tk.Entry(frame_pontos_inputs)
-    entry_x.pack()
-
-    label_y = tk.Label(frame_pontos_inputs, text="Coordenada y:")
-    label_y.pack()
-    entry_y = tk.Entry(frame_pontos_inputs)
-    entry_y.pack()
-
-    btn_ponto = tk.Button(frame_pontos_inputs, text="Adicionar Ponto", command=lambda: adicionar_atualizar_ponto())
-    btn_ponto.pack(pady=5)
-
-    # Botão para exibir o plano de pontos
-    btn_exibir_pontos = tk.Button(frame_pontos_inputs, text="Exibir Plano de Pontos", command=lambda: exibir_plano_pontos())
-    btn_exibir_pontos.pack(pady=5)
-
-    # Lista de Pontos
-    label_lista_pontos = tk.Label(frame_pontos_lista, text="Lista de Pontos")
-    label_lista_pontos.pack()
-
-    listbox_pontos = tk.Listbox(frame_pontos_lista)
-    listbox_pontos.pack(expand=1, fill='both')
-
-    frame_ponto_botoes = tk.Frame(frame_pontos_lista)
-    frame_ponto_botoes.pack(pady=5)
-
-    btn_editar_ponto = tk.Button(frame_ponto_botoes, text="Editar Ponto", command=lambda: editar_ponto())
-    btn_editar_ponto.grid(row=0, column=0, padx=5)
-
-    btn_deletar_ponto = tk.Button(frame_ponto_botoes, text="Deletar Ponto", command=lambda: deletar_ponto())
-    btn_deletar_ponto.grid(row=0, column=1, padx=5)
-
-    # ------------------- Aba de Vetores ------------------- #
-    # Frames para inputs e lista
-    frame_vetores_main = tk.Frame(frame_vetores)
-    frame_vetores_main.pack(expand=1, fill='both')
-
-    frame_vetores_inputs = tk.Frame(frame_vetores_main)
-    frame_vetores_inputs.pack(side='left', fill='both', expand=True, padx=10, pady=10)
-
-    frame_vetores_lista = tk.Frame(frame_vetores_main)
-    frame_vetores_lista.pack(side='right', fill='both', expand=True, padx=10, pady=10)
-
-    # Inputs para Vetores
-    label_vetor = tk.Label(frame_vetores_inputs, text="Adicionar/Editar Vetor")
-    label_vetor.pack()
-
-    label_nome_vetor = tk.Label(frame_vetores_inputs, text="Nome do Vetor:")
-    label_nome_vetor.pack()
-    entry_nome_vetor = tk.Entry(frame_vetores_inputs)
-    entry_nome_vetor.pack()
-
-    label_xa = tk.Label(frame_vetores_inputs, text="x do ponto A:")
-    label_xa.pack()
-    entry_xa = tk.Entry(frame_vetores_inputs)
-    entry_xa.pack()
-
-    label_ya = tk.Label(frame_vetores_inputs, text="y do ponto A:")
-    label_ya.pack()
-    entry_ya = tk.Entry(frame_vetores_inputs)
-    entry_ya.pack()
-
-    label_xb = tk.Label(frame_vetores_inputs, text="x do ponto B:")
-    label_xb.pack()
-    entry_xb = tk.Entry(frame_vetores_inputs)
-    entry_xb.pack()
-
-    label_yb = tk.Label(frame_vetores_inputs, text="y do ponto B:")
-    label_yb.pack()
-    entry_yb = tk.Entry(frame_vetores_inputs)
-    entry_yb.pack()
-
-    btn_vetor = tk.Button(frame_vetores_inputs, text="Adicionar Vetor", command=lambda: adicionar_atualizar_vetor())
-    btn_vetor.pack(pady=5)
-
-    # Botão para exibir o plano de vetores
-    btn_exibir_vetores = tk.Button(frame_vetores_inputs, text="Exibir Plano de Vetores", command=lambda: exibir_plano_vetores())
-    btn_exibir_vetores.pack(pady=5)
-
-    # Lista de Vetores
-    label_lista_vetores = tk.Label(frame_vetores_lista, text="Lista de Vetores")
-    label_lista_vetores.pack()
-
-    listbox_vetores = tk.Listbox(frame_vetores_lista)
-    listbox_vetores.pack(expand=1, fill='both')
-
-    frame_vetor_botoes = tk.Frame(frame_vetores_lista)
-    frame_vetor_botoes.pack(pady=5)
-
-    btn_editar_vetor = tk.Button(frame_vetor_botoes, text="Editar Vetor", command=lambda: editar_vetor())
-    btn_editar_vetor.grid(row=0, column=0, padx=5)
-
-    btn_deletar_vetor = tk.Button(frame_vetor_botoes, text="Deletar Vetor", command=lambda: deletar_vetor())
-    btn_deletar_vetor.grid(row=0, column=1, padx=5)
 
     # ------------------- Aba de Pontos e Vetores ------------------- #
     # Frames para inputs e listas
@@ -302,6 +236,10 @@ def main():
     listbox_pv_pontos = tk.Listbox(frame_pv_pontos)
     listbox_pv_pontos.pack(expand=1, fill='both')
 
+
+    btn_editar_pv_ponto = tk.Button(frame_pv_pontos, text="Editar Ponto", command=lambda: editar_pv_ponto())
+    btn_editar_pv_ponto.pack(pady=5)
+    
     btn_deletar_pv_ponto = tk.Button(frame_pv_pontos, text="Deletar Ponto", command=lambda: deletar_pv_ponto())
     btn_deletar_pv_ponto.pack(pady=5)
 
@@ -312,6 +250,9 @@ def main():
     listbox_pv_vetores = tk.Listbox(frame_pv_vetores)
     listbox_pv_vetores.pack(expand=1, fill='both')
 
+    btn_editar_pv_vetor = tk.Button(frame_pv_vetores, text="Editar Vetor", command=lambda: editar_pv_vetor())
+    btn_editar_pv_vetor.pack(pady=5)
+    
     btn_deletar_pv_vetor = tk.Button(frame_pv_vetores, text="Deletar Vetor", command=lambda: deletar_pv_vetor())
     btn_deletar_pv_vetor.pack(pady=5)
 
@@ -323,171 +264,37 @@ def main():
     pontos_pv = []
     vetores_pv = []
 
-    # ------------------- Funções para Pontos ------------------- #
-    def atualizar_lista_pontos():
-        listbox_pontos.delete(0, tk.END)
-        for i, ponto in enumerate(plan.points):
-            nome = ponto.name if ponto.name else ''
-            listbox_pontos.insert(tk.END, f"{i+1}: {nome}({ponto.x}, {ponto.y})")
-
-    def adicionar_atualizar_ponto():
-        nonlocal qtd_pontos, editando_ponto, indice_ponto_editando
-        if not editando_ponto and qtd_pontos >= 5:
-            messagebox.showerror("Erro", "Limite de 5 pontos atingido.")
-            return
-
-        try:
-            nome = entry_nome_ponto.get().strip()
-            x = float(entry_x.get())
-            y = float(entry_y.get())
-            ponto = Point(x, y, name=nome)
-
-            if editando_ponto:
-                plan.points[indice_ponto_editando] = ponto
-                messagebox.showinfo("Sucesso", f"Ponto atualizado para {ponto.name}({ponto.x}, {ponto.y}).")
-                btn_ponto.config(text="Adicionar Ponto")
-                editando_ponto = False
-                indice_ponto_editando = None
-            else:
-                plan.add_point(ponto)
-                qtd_pontos += 1
-                messagebox.showinfo("Sucesso", f"Ponto {ponto.name}({ponto.x}, {ponto.y}) adicionado.")
-
-            atualizar_lista_pontos()
-            entry_nome_ponto.delete(0, tk.END)
-            entry_x.delete(0, tk.END)
-            entry_y.delete(0, tk.END)
-        except ValueError:
-            messagebox.showerror("Erro", "Insira valores numéricos válidos.")
-
-    def editar_ponto():
-        nonlocal editando_ponto, indice_ponto_editando
-        selected_index = listbox_pontos.curselection()
-        if not selected_index:
-            messagebox.showerror("Erro", "Selecione um ponto para editar.")
-            return
-        index = selected_index[0]
-        ponto = plan.points[index]
-        entry_nome_ponto.delete(0, tk.END)
-        entry_nome_ponto.insert(0, ponto.name)
-        entry_x.delete(0, tk.END)
-        entry_x.insert(0, str(ponto.x))
-        entry_y.delete(0, tk.END)
-        entry_y.insert(0, str(ponto.y))
-        btn_ponto.config(text="Atualizar Ponto")
-        editando_ponto = True
-        indice_ponto_editando = index
-
-    def deletar_ponto():
-        nonlocal qtd_pontos
-        selected_index = listbox_pontos.curselection()
-        if not selected_index:
-            messagebox.showerror("Erro", "Selecione um ponto para deletar.")
-            return
-        index = selected_index[0]
-        del plan.points[index]
-        qtd_pontos -= 1
-        atualizar_lista_pontos()
-
-    def exibir_plano_pontos():
-        if qtd_pontos == 0:
-            messagebox.showerror("Erro", "Adicione pelo menos um ponto.")
-            return
-        desenhar_pontos(plan.points)
-
-    # ------------------- Funções para Vetores ------------------- #
-    def atualizar_lista_vetores():
-        listbox_vetores.delete(0, tk.END)
-        for i, vetor in enumerate(plan.vectors):
-            a = vetor.ponto_a
-            b = vetor.ponto_b
-            nome = vetor.name if vetor.name else ''
-            listbox_vetores.insert(tk.END, f"{i+1}: {nome}: A({a.x}, {a.y}) -> B({b.x}, {b.y})")
-
-    def adicionar_atualizar_vetor():
-        nonlocal qtd_vetores, editando_vetor, indice_vetor_editando
-        if not editando_vetor and qtd_vetores >= 4:
-            messagebox.showerror("Erro", "Limite de 4 vetores atingido.")
-            return
-
-        try:
-            nome = entry_nome_vetor.get().strip()
-            x_a = float(entry_xa.get())
-            y_a = float(entry_ya.get())
-            x_b = float(entry_xb.get())
-            y_b = float(entry_yb.get())
-
-            ponto_a = Point(x_a, y_a)
-            ponto_b = Point(x_b, y_b)
-            vetor = Vector(ponto_a, ponto_b, name=nome)
-
-            if editando_vetor:
-                plan.vectors[indice_vetor_editando] = vetor
-                messagebox.showinfo("Sucesso", "Vetor atualizado.")
-                btn_vetor.config(text="Adicionar Vetor")
-                editando_vetor = False
-                indice_vetor_editando = None
-            else:
-                plan.add_vector(vetor)
-                qtd_vetores += 1
-                messagebox.showinfo("Sucesso", f"Vetor {nome} de ({x_a}, {y_a}) até ({x_b}, {y_b}) adicionado.")
-
-            atualizar_lista_vetores()
-            entry_nome_vetor.delete(0, tk.END)
-            entry_xa.delete(0, tk.END)
-            entry_ya.delete(0, tk.END)
-            entry_xb.delete(0, tk.END)
-            entry_yb.delete(0, tk.END)
-        except ValueError:
-            messagebox.showerror("Erro", "Insira valores numéricos válidos.")
-
-    def editar_vetor():
-        nonlocal editando_vetor, indice_vetor_editando
-        selected_index = listbox_vetores.curselection()
-        if not selected_index:
-            messagebox.showerror("Erro", "Selecione um vetor para editar.")
-            return
-        index = selected_index[0]
-        vetor = plan.vectors[index]
-        entry_nome_vetor.delete(0, tk.END)
-        entry_nome_vetor.insert(0, vetor.name)
-        entry_xa.delete(0, tk.END)
-        entry_xa.insert(0, str(vetor.ponto_a.x))
-        entry_ya.delete(0, tk.END)
-        entry_ya.insert(0, str(vetor.ponto_a.y))
-        entry_xb.delete(0, tk.END)
-        entry_xb.insert(0, str(vetor.ponto_b.x))
-        entry_yb.delete(0, tk.END)
-        entry_yb.insert(0, str(vetor.ponto_b.y))
-        btn_vetor.config(text="Atualizar Vetor")
-        editando_vetor = True
-        indice_vetor_editando = index
-
-    def deletar_vetor():
-        nonlocal qtd_vetores
-        selected_index = listbox_vetores.curselection()
-        if not selected_index:
-            messagebox.showerror("Erro", "Selecione um vetor para deletar.")
-            return
-        index = selected_index[0]
-        del plan.vectors[index]
-        qtd_vetores -= 1
-        atualizar_lista_vetores()
-
-    def exibir_plano_vetores():
-        if qtd_vetores == 0:
-            messagebox.showerror("Erro", "Adicione pelo menos um vetor.")
-            return
-        desenhar_vetores(plan.vectors)
-
     # ------------------- Funções para Pontos e Vetores ------------------- #
+    
+    def desenhar_vetor_no_canvas(vetor, canvas) -> int:
+        mid_x = canvas_width / 2
+        mid_y = canvas_height / 2
+        scale = 20  # Escala para o plano de 6x6
+
+        return canvas.create_line(mid_x + vetor.ponto_a.x * scale, mid_y - vetor.ponto_a.y * scale,
+                        mid_x + vetor.ponto_b.x * scale, mid_y - vetor.ponto_b.y * scale, fill='red', width=2)
+            
+    def desenhar_ponto_no_canvas(ponto, canvas) -> str:
+        mid_x = canvas_width / 2
+        mid_y = canvas_height / 2
+        scale = 20  # Escala para o plano de 6x6
+
+        # Desenhar o ponto no canvas
+        circulo = canvas.create_oval(mid_x + ponto.x * scale - 5, mid_y - ponto.y * scale - 5,
+                        mid_x + ponto.x * scale + 5, mid_y - ponto.y * scale + 5,
+                        fill='blue')
+        label = f'{ponto.name}({ponto.x}, {ponto.y})' if ponto.name else f'({ponto.x}, {ponto.y})'
+        texto = canvas.create_text(mid_x + ponto.x * scale + 8, mid_y - ponto.y * scale, text=label, fill='black')
+        
+        return str(str(circulo) + "-" + str(texto))
+
     def adicionar_pv():
-        nonlocal qtd_pontos, qtd_vetores
+        nonlocal qtd_pontos, qtd_vetores, editando_vetor, editando_ponto, indice_vetor_editando, indice_ponto_editando
         input_text = entry_input.get().strip()
         if not input_text:
             messagebox.showerror("Erro", "Insira um ponto ou vetor no formato correto.")
             return
-
+        
         try:
             if '=' in input_text:
                 # Vetor no formato Nome=(x,y)
@@ -497,14 +304,36 @@ def main():
                 x_str, y_str = coords.split(',')
                 x = float(x_str)
                 y = float(y_str)
-                if qtd_vetores >= 4:
-                    messagebox.showerror("Erro", "Limite de 4 vetores atingido.")
-                    return
+                
                 vetor = Vector(Point(0, 0), Point(x, y), name=nome)
-                vetores_pv.append(vetor)
-                qtd_vetores += 1
+
+                if editando_vetor:
+                    vetores_pv[indice_vetor_editando] = vetor
+                    messagebox.showinfo("Sucesso", "Vetor atualizado.")
+                    btn_adicionar_pv.config(text="Adicionar")
+                    editando_vetor = False
+                    indice_vetor_editando = None
+                    
+                    for n in indices_vetores_canvas_pv:
+                        canvas_vetores_pv.plano.delete(n)
+                    
+                    indices_vetores_canvas_pv.clear()    
+                    
+                    for v in vetores_pv:
+                        indices_vetores_canvas_pv.append(desenhar_vetor_no_canvas(v, canvas_vetores_pv.plano))
+                
+                else:  
+                    if qtd_vetores >= 4:
+                        messagebox.showerror("Erro", "Limite de 4 vetores atingido.")
+                        return
+                    
+                    vetores_pv.append(vetor)
+                    indices_vetores_canvas_pv.append(desenhar_vetor_no_canvas(vetor, canvas_vetores_pv.plano))
+                    qtd_vetores += 1
+                    messagebox.showinfo("Sucesso", f"Vetor {nome}({x}, {y}) adicionado.")
+
+                
                 atualizar_lista_pv_vetores()
-                messagebox.showinfo("Sucesso", f"Vetor {nome}({x}, {y}) adicionado.")
             else:
                 # Ponto no formato Nome(x,y)
                 var_name, coords = input_text.split('(')
@@ -513,14 +342,40 @@ def main():
                 x_str, y_str = coords.split(',')
                 x = float(x_str)
                 y = float(y_str)
-                if qtd_pontos >= 5:
-                    messagebox.showerror("Erro", "Limite de 5 pontos atingido.")
-                    return
+                
                 ponto = Point(x, y, name=nome)
-                pontos_pv.append(ponto)
-                qtd_pontos += 1
+
+                if editando_ponto:
+                    pontos_pv[indice_ponto_editando] = ponto
+                    messagebox.showinfo("Sucesso", "Ponto atualizado.")
+                    btn_adicionar_pv.config(text="Adicionar")
+                    editando_ponto = False
+                    indice_ponto_editando = None
+                    
+                    
+                    for n in indices_pontos_canvas_pv:
+                        formatAndText = str.split(n, "-")
+                        canvas_pontos_pv.plano.delete(formatAndText[0])
+                        canvas_pontos_pv.plano.delete(formatAndText[1])
+                    
+                    indices_pontos_canvas_pv.clear()    
+                    
+                    for p in pontos_pv:
+                        indices_pontos_canvas_pv.append(desenhar_ponto_no_canvas(p, canvas_pontos_pv.plano))
+
+                    
+                else: 
+                    if qtd_pontos >= 5:
+                        messagebox.showerror("Erro", "Limite de 5 pontos atingido.")
+                        return
+                    
+                    pontos_pv.append(ponto)
+                    indices_pontos_canvas_pv.append(desenhar_ponto_no_canvas(ponto, canvas_pontos_pv.plano))
+                    qtd_pontos += 1
+
+                    messagebox.showinfo("Sucesso", f"Ponto {nome}({x}, {y}) adicionado.")
+                
                 atualizar_lista_pv_pontos()
-                messagebox.showinfo("Sucesso", f"Ponto {nome}({x}, {y}) adicionado.")
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao processar a entrada: {e}")
         finally:
@@ -540,6 +395,40 @@ def main():
             nome = vetor.name if vetor.name else ''
             listbox_pv_vetores.insert(tk.END, f"{i+1}: {nome}({dx}, {dy})")
 
+
+    def editar_pv_ponto():
+        nonlocal editando_ponto, indice_ponto_editando
+        selected_index = listbox_pv_pontos.curselection()
+        if not selected_index:
+            messagebox.showerror("Erro", "Selecione um ponto para editar.")
+            return
+        index = selected_index[0]
+
+        ponto = pontos_pv[index]
+        entry_input.insert(0,str(ponto.name + "(") + str(ponto.x) + "," + str(ponto.y) + ")")
+        
+        btn_adicionar_pv.config(text="Atualizar Ponto")
+
+        editando_ponto = True
+        indice_ponto_editando = index
+        
+
+    def editar_pv_vetor():
+        nonlocal editando_vetor, indice_vetor_editando
+        selected_index = listbox_pv_vetores.curselection()
+        if not selected_index:
+            messagebox.showerror("Erro", "Selecione um vetor para editar.")
+            return
+        index = selected_index[0]
+
+        vetor = vetores_pv[index]
+        entry_input.insert(0,str(vetor.name + "=(") + str(vetor.ponto_b.x) + "," + str(vetor.ponto_b.y) + ")")
+        
+        btn_adicionar_pv.config(text="Atualizar Vetor")
+
+        editando_vetor = True
+        indice_vetor_editando = index
+                
     def deletar_pv_ponto():
         nonlocal qtd_pontos
         selected_index = listbox_pv_pontos.curselection()
@@ -549,6 +438,17 @@ def main():
         index = selected_index[0]
         del pontos_pv[index]
         qtd_pontos -= 1
+
+        for n in indices_pontos_canvas_pv:
+            formatAndText = str.split(n, "-")
+            canvas_pontos_pv.plano.delete(formatAndText[0])
+            canvas_pontos_pv.plano.delete(formatAndText[1])
+        
+        indices_pontos_canvas_pv.clear()    
+        
+        for p in pontos_pv:
+            indices_pontos_canvas_pv.append(desenhar_ponto_no_canvas(p, canvas_pontos_pv.plano))
+                
         atualizar_lista_pv_pontos()
 
     def deletar_pv_vetor():
@@ -560,6 +460,16 @@ def main():
         index = selected_index[0]
         del vetores_pv[index]
         qtd_vetores -= 1
+        
+        
+        for n in indices_vetores_canvas_pv:
+            canvas_vetores_pv.plano.delete(n)
+                    
+        indices_vetores_canvas_pv.clear()    
+                    
+        for v in vetores_pv:
+            indices_vetores_canvas_pv.append(desenhar_vetor_no_canvas(v, canvas_vetores_pv.plano))
+            
         atualizar_lista_pv_vetores()
 
     def exibir_plano_pv():
