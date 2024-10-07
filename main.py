@@ -12,19 +12,18 @@ from plan import Plan
 import numpy as np  # Necessário para trabalhar com arrays numéricos
 
 # Adicionar o Canvas para o plano cartesiano
-canvas_width = 400
-canvas_height = 400
+canvas_width = 300  # Reduzido para melhor se ajustar a telas menores
+canvas_height = 300
 
 class Canvas:
     def __init__(self, plano):
         self.plano = plano
 
-
 def criar_canvas(aba):
-        canvas = tk.Canvas(aba, width=canvas_width, height=canvas_height, bg='white')
-        canvas.pack(expand=True, fill='both')
-        desenhar_plano_cartesiano(canvas)
-        return canvas
+    canvas = tk.Canvas(aba, width=canvas_width, height=canvas_height, bg='white')
+    canvas.pack(expand=True, fill='both')
+    desenhar_plano_cartesiano(canvas)
+    return canvas
 
 def desenhar_plano_cartesiano(canvas):
     # Limpar o canvas
@@ -68,16 +67,19 @@ def desenhar_pista(ax):
     pista_x.extend([0, 0])
     pista_y.extend([0, 5])
 
-    # 2.  Pequena reta de (0,5) até (10,10)
+    # 2.  Pequena reta de (0,5) até (5,10)
     pista_x.extend([0, 5])
+    pista_y.extend([5, 10])
+
+    # 3. Pequena reta de (5,10) até (10,10)
+    pista_x.extend([5, 10])
     pista_y.extend([10, 10])
 
-    # 3. Pequena reta de (10,10) até (10,-5)
+    # 4. Pequena reta de (10,10) até (10,-5)
     pista_x.extend([10, 10])
     pista_y.extend([10, -5])
 
-
-    # 4. Curva final retornando ao ponto de largada (0,0)
+    # 5. Curva final retornando ao ponto de largada (0,0)
     angulos2 = np.linspace(0, np.pi, 100)
     raio2 = 5
     centro_x2 = 5
@@ -192,58 +194,82 @@ def main():
 
     # Criar frames para cada aba
     frame_pontos_vetores = tk.Frame(notebook)
-
     notebook.add(frame_pontos_vetores, text="Pontos e Vetores")
-    
-    #pv
-    canvas_pontos_pv = Canvas(criar_canvas(frame_pontos_vetores))
-    indices_pontos_canvas_pv = []
-    canvas_vetores_pv = Canvas(criar_canvas(frame_pontos_vetores))
-    indices_vetores_canvas_pv = []
 
-
-    # ------------------- Aba de Pontos e Vetores ------------------- #
-    # Frames para inputs e listas
+    # Criar o frame principal
     frame_pv_main = tk.Frame(frame_pontos_vetores)
     frame_pv_main.pack(expand=1, fill='both')
 
-    frame_pv_input = tk.Frame(frame_pv_main)
-    frame_pv_input.pack(side='top', fill='x', padx=10, pady=10)
+    # Dividir o frame principal em duas seções: esquerda e direita
+    frame_esquerda = tk.Frame(frame_pv_main)
+    frame_esquerda.pack(side='left', fill='both', expand=True)
 
-    frame_pv_lists = tk.Frame(frame_pv_main)
-    frame_pv_lists.pack(side='top', fill='both', expand=True, padx=10, pady=10)
+    frame_direita = tk.Frame(frame_pv_main)
+    frame_direita.pack(side='right', fill='both', expand=True)
 
-    # Input de texto
-    label_input = tk.Label(frame_pv_input, text="Insira um Ponto ou Vetor (Ex: D(1,2) ou t=(3,4)):")
-    label_input.pack()
-    entry_input = tk.Entry(frame_pv_input)
+    # Seção Esquerda: Canvases
+    label_canvas_pontos = tk.Label(frame_esquerda, text="Plano de Pontos")
+    label_canvas_pontos.pack()
+    canvas_pontos_pv = Canvas(criar_canvas(frame_esquerda))
+    indices_pontos_canvas_pv = []
+
+    label_canvas_vetores = tk.Label(frame_esquerda, text="Plano de Vetores")
+    label_canvas_vetores.pack()
+    canvas_vetores_pv = Canvas(criar_canvas(frame_esquerda))
+    indices_vetores_canvas_pv = []
+
+    # Seção Direita: Inputs e Listas com Scrollbar
+    # Criar um canvas para permitir a rolagem
+    canvas_direita = tk.Canvas(frame_direita)
+    scrollbar_direita = tk.Scrollbar(frame_direita, orient='vertical', command=canvas_direita.yview)
+    canvas_direita.configure(yscrollcommand=scrollbar_direita.set)
+
+    scrollbar_direita.pack(side='right', fill='y')
+    canvas_direita.pack(side='left', fill='both', expand=True)
+
+    # Criar um frame dentro do canvas_direita
+    frame_direita_conteudo = tk.Frame(canvas_direita)
+    canvas_direita.create_window((0, 0), window=frame_direita_conteudo, anchor='nw')
+
+    # Ajustar o tamanho do canvas_direita conforme o conteúdo
+    def atualizar_scroll(event):
+        canvas_direita.configure(scrollregion=canvas_direita.bbox('all'))
+
+    frame_direita_conteudo.bind('<Configure>', atualizar_scroll)
+
+    # Inputs e Botões
+    label_input = tk.Label(frame_direita_conteudo, text="Insira um Ponto ou Vetor (Ex: D(1,2) ou t=(3,4)):")
+    label_input.pack(pady=5)
+    entry_input = tk.Entry(frame_direita_conteudo)
     entry_input.pack(fill='x')
 
-    btn_adicionar_pv = tk.Button(frame_pv_input, text="Adicionar", command=lambda: adicionar_pv())
+    btn_adicionar_pv = tk.Button(frame_direita_conteudo, text="Adicionar", command=lambda: adicionar_pv())
     btn_adicionar_pv.pack(pady=5)
 
-    # Frame para listas
-    frame_pv_pontos = tk.Frame(frame_pv_lists)
-    frame_pv_pontos.pack(side='left', fill='both', expand=True, padx=10)
-
-    frame_pv_vetores = tk.Frame(frame_pv_lists)
-    frame_pv_vetores.pack(side='right', fill='both', expand=True, padx=10)
+    # Listas de Pontos e Vetores
+    frame_pv_lists = tk.Frame(frame_direita_conteudo)
+    frame_pv_lists.pack(fill='both', expand=True, padx=10, pady=10)
 
     # Lista de Pontos
+    frame_pv_pontos = tk.Frame(frame_pv_lists)
+    frame_pv_pontos.pack(side='left', fill='both', expand=True, padx=5)
+
     label_lista_pv_pontos = tk.Label(frame_pv_pontos, text="Lista de Pontos")
     label_lista_pv_pontos.pack()
 
     listbox_pv_pontos = tk.Listbox(frame_pv_pontos)
     listbox_pv_pontos.pack(expand=1, fill='both')
 
-
     btn_editar_pv_ponto = tk.Button(frame_pv_pontos, text="Editar Ponto", command=lambda: editar_pv_ponto())
     btn_editar_pv_ponto.pack(pady=5)
-    
+
     btn_deletar_pv_ponto = tk.Button(frame_pv_pontos, text="Deletar Ponto", command=lambda: deletar_pv_ponto())
     btn_deletar_pv_ponto.pack(pady=5)
 
     # Lista de Vetores
+    frame_pv_vetores = tk.Frame(frame_pv_lists)
+    frame_pv_vetores.pack(side='right', fill='both', expand=True, padx=5)
+
     label_lista_pv_vetores = tk.Label(frame_pv_vetores, text="Lista de Vetores")
     label_lista_pv_vetores.pack()
 
@@ -252,12 +278,12 @@ def main():
 
     btn_editar_pv_vetor = tk.Button(frame_pv_vetores, text="Editar Vetor", command=lambda: editar_pv_vetor())
     btn_editar_pv_vetor.pack(pady=5)
-    
+
     btn_deletar_pv_vetor = tk.Button(frame_pv_vetores, text="Deletar Vetor", command=lambda: deletar_pv_vetor())
     btn_deletar_pv_vetor.pack(pady=5)
 
     # Botão para exibir o plano
-    btn_exibir_pv = tk.Button(frame_pv_main, text="Exibir Plano", command=lambda: exibir_plano_pv())
+    btn_exibir_pv = tk.Button(frame_direita_conteudo, text="Exibir Plano", command=lambda: exibir_plano_pv())
     btn_exibir_pv.pack(pady=5)
 
     # Listas para armazenar pontos e vetores desta aba
@@ -265,7 +291,7 @@ def main():
     vetores_pv = []
 
     # ------------------- Funções para Pontos e Vetores ------------------- #
-    
+
     def desenhar_vetor_no_canvas(vetor, canvas) -> int:
         mid_x = canvas_width / 2
         mid_y = canvas_height / 2
@@ -352,7 +378,6 @@ def main():
                     editando_ponto = False
                     indice_ponto_editando = None
                     
-                    
                     for n in indices_pontos_canvas_pv:
                         formatAndText = str.split(n, "-")
                         canvas_pontos_pv.plano.delete(formatAndText[0])
@@ -405,7 +430,7 @@ def main():
         index = selected_index[0]
 
         ponto = pontos_pv[index]
-        entry_input.insert(0,str(ponto.name + "(") + str(ponto.x) + "," + str(ponto.y) + ")")
+        entry_input.insert(0, str(ponto.name + "(") + str(ponto.x) + "," + str(ponto.y) + ")")
         
         btn_adicionar_pv.config(text="Atualizar Ponto")
 
@@ -422,7 +447,7 @@ def main():
         index = selected_index[0]
 
         vetor = vetores_pv[index]
-        entry_input.insert(0,str(vetor.name + "=(") + str(vetor.ponto_b.x) + "," + str(vetor.ponto_b.y) + ")")
+        entry_input.insert(0, str(vetor.name + "=(") + str(vetor.ponto_b.x) + "," + str(vetor.ponto_b.y) + ")")
         
         btn_adicionar_pv.config(text="Atualizar Vetor")
 
@@ -460,7 +485,6 @@ def main():
         index = selected_index[0]
         del vetores_pv[index]
         qtd_vetores -= 1
-        
         
         for n in indices_vetores_canvas_pv:
             canvas_vetores_pv.plano.delete(n)
