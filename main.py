@@ -3,174 +3,120 @@
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
+import numpy as np  # Necessário para trabalhar com arrays numéricos
 from point import Point
 from vector import Vector
 from plan import Plan
 
-import numpy as np  # Necessário para trabalhar com arrays numéricos
+# Dimensões do canvas
+canvas_width = 600
+canvas_height = 600
+scale = 20  # Escala para converter unidades de coordenadas para pixels
 
-# Adicionar o Canvas para o plano cartesiano
-canvas_width = 300  # Reduzido para melhor se ajustar a telas menores
-canvas_height = 300
+# Ponto médio do canvas
+mid_x = canvas_width / 2
+mid_y = canvas_height / 2
 
-class Canvas:
+def transform_coords(x, y):
+    """Transforma coordenadas matemáticas em coordenadas do canvas."""
+    x_canvas = mid_x + x * scale
+    y_canvas = mid_y - y * scale  # Inverte o eixo Y
+    return x_canvas, y_canvas
+
+class CanvasWrapper:
     def __init__(self, plano):
         self.plano = plano
 
 def criar_canvas(aba):
     canvas = tk.Canvas(aba, width=canvas_width, height=canvas_height, bg='white')
     canvas.pack(expand=True, fill='both')
-    desenhar_plano_cartesiano(canvas)
+    desenhar_pista(canvas)
     return canvas
 
-def desenhar_plano_cartesiano(canvas):
-    # Limpar o canvas
-    canvas.delete("all")
-    
-    # Desenhar os eixos
-    mid_x = canvas_width / 2
-    mid_y = canvas_height / 2
-    scale = 20  # Escala para o plano de 6x6
+# Função para desenhar a pista de corrida personalizada no canvas do Tkinter
+def desenhar_pista(canvas):
+    # Lista de pontos da pista
+    pista_coords = []
 
-    # Eixo X
-    canvas.create_line(0, mid_y, canvas_width, mid_y, fill='black', width=2)
-    # Eixo Y
-    canvas.create_line(mid_x, 0, mid_x, canvas_height, fill='black', width=2)
+    # 1. Reta inicial de (0,0) até (0,5)
+    x1, y1 = transform_coords(0, 0)
+    x2, y2 = transform_coords(0, 5)
+    canvas.create_line(x1, y1, x2, y2, fill='gray', width=20, capstyle='round')
+    pista_coords.append((x1, y1))
+    pista_coords.append((x2, y2))
 
-    # Linhas de grade e marcas
-    for i in range(-6, 7):
-        if i != 0:
-            # Linhas verticais
-            canvas.create_line(mid_x + i * scale, 0, mid_x + i * scale, canvas_height, fill='lightgray')
-            # Linhas horizontais
-            canvas.create_line(0, mid_y - i * scale, canvas_width, mid_y - i * scale, fill='lightgray')
+    # 2. Reta de (0,5) até (5,10)
+    x3, y3 = transform_coords(5, 10)
+    canvas.create_line(x2, y2, x3, y3, fill='gray', width=20, capstyle='round')
+    pista_coords.append((x3, y3))
 
-    # Marcas nos eixos
-    for i in range(-6, 7):
-        if i != 0:
-            canvas.create_text(mid_x + i * scale, mid_y + 10, text=str(i), fill='black')
-            canvas.create_text(mid_x + 10, mid_y - i * scale, text=str(i), fill='black')
+    # 3. Reta de (5,10) até (10,10)
+    x4, y4 = transform_coords(10, 10)
+    canvas.create_line(x3, y3, x4, y4, fill='gray', width=20, capstyle='round')
+    pista_coords.append((x4, y4))
 
-    # Desenhar o ponto (0,0)
-    canvas.create_oval(mid_x - 5, mid_y - 5, mid_x + 5, mid_y + 5, fill='black')
-    
-
-# Função para desenhar a pista de corrida personalizada
-def desenhar_pista(ax):
-    # Coordenadas da pista
-    pista_x = []
-    pista_y = []
-
-    # 1. Reta inicial a partir de (0,0) até (0,5)
-    pista_x.extend([0, 0])
-    pista_y.extend([0, 5])
-
-    # 2.  Pequena reta de (0,5) até (5,10)
-    pista_x.extend([0, 5])
-    pista_y.extend([5, 10])
-
-    # 3. Pequena reta de (5,10) até (10,10)
-    pista_x.extend([5, 10])
-    pista_y.extend([10, 10])
-
-    # 4. Pequena reta de (10,10) até (10,-5)
-    pista_x.extend([10, 10])
-    pista_y.extend([10, -5])
+    # 4. Reta de (10,10) até (10,-5)
+    x5, y5 = transform_coords(10, -5)
+    canvas.create_line(x4, y4, x5, y5, fill='gray', width=20, capstyle='round')
+    pista_coords.append((x5, y5))
 
     # 5. Curva final retornando ao ponto de largada (0,0)
-    angulos2 = np.linspace(0, np.pi, 100)
-    raio2 = 5
-    centro_x2 = 5
-    centro_y2 = -5
-    curva_x3 = centro_x2 + raio2 * np.cos(angulos2)
-    curva_y3 = centro_y2 - raio2 * np.sin(angulos2)
-    pista_x.extend(curva_x3)
-    pista_y.extend(curva_y3)
+    # Parâmetros da curva
+    raio = 5 * scale
+    centro_x, centro_y = transform_coords(5, -5)
+    bbox = [
+        centro_x - raio,
+        centro_y - raio,
+        centro_x + raio,
+        centro_y + raio
+    ]
+    # Desenhar arco (semicírculo)
+    canvas.create_arc(bbox, start=0, extent=-180, style=tk.ARC, outline='gray', width=20)
+    # Adicionar pontos da curva para a linha central
+    angulos = np.linspace(0, np.pi, 100)
+    curva_x = centro_x + raio * np.cos(angulos) 
+    curva_y = centro_y + raio * np.sin(angulos)
+    pista_coords.extend(zip(curva_x, curva_y))
 
-    # Fechar a pista conectando ao ponto inicial
-    pista_x.append(0)
-    pista_y.append(0)
+    # 5. Reta final de (0,-5) até (0,0)
+    x1, y1 = transform_coords(0, -5)
+    x2, y2 = transform_coords(0, 0)
+    canvas.create_line(x1, y1, x2, y2, fill='gray', width=20, capstyle='round')
+    pista_coords.append((x1, y1))
+    pista_coords.append((x2, y2))
 
-    # Desenhar a pista
-    ax.plot(pista_x, pista_y, color='gray', linewidth=20, solid_capstyle='round', zorder=1)
+    # Desenhar linha central
+    for i in range(len(pista_coords) - 1):
+        canvas.create_line(
+            pista_coords[i][0], pista_coords[i][1],
+            pista_coords[i+1][0], pista_coords[i+1][1],
+            fill='white', width=2, dash=(5, 5)
+        )
 
-    # Adicionar linha central para indicar o caminho
-    ax.plot(pista_x, pista_y, color='white', linewidth=2, linestyle='--', zorder=2)
+    # Desenhar linha de largada
+    x_start1, y_start1 = transform_coords(-0.5, 0)
+    x_start2, y_start2 = transform_coords(0.5, 0)
+    canvas.create_line(x_start1, y_start1, x_start2, y_start2, fill='black', width=5)
 
-    # Adicionar a linha de largada no ponto (0,0)
-    ax.plot([-0.5, 0.5], [0, 0], color='black', linewidth=5)
+def desenhar_ponto_no_canvas(ponto, canvas):
+    x_canvas, y_canvas = transform_coords(ponto.x, ponto.y)
+    # Desenhar o ponto no canvas
+    circulo = canvas.create_oval(x_canvas - 5, y_canvas - 5, x_canvas + 5, y_canvas + 5, fill='blue')
+    label = f'{ponto.name}({ponto.x}, {ponto.y})' if ponto.name else f'({ponto.x}, {ponto.y})'
+    texto = canvas.create_text(x_canvas + 15, y_canvas, text=label, fill='black')
+    return circulo, texto
 
-def desenhar_pontos(pontos):
-    fig, ax = plt.subplots()
-    ax.set_xlim(-5, 25)
-    ax.set_ylim(-15, 15)
-    ax.set_aspect('equal')  # Manter a proporção dos eixos
-    ax.axis('off')  # Opcional: remover os eixos para destacar a pista
-
-    # Desenhar a pista de corrida
-    desenhar_pista(ax)
-
-    # Plotar pontos
-    for ponto in pontos:
-        ax.plot(ponto.x, ponto.y, 'bo')  # pontos azuis
-        label = f'{ponto.name}({ponto.x}, {ponto.y})' if ponto.name else f'({ponto.x}, {ponto.y})'
-        ax.text(ponto.x + 0.5, ponto.y + 0.5, label)
-
-    plt.title("Plano de Pontos com Pista de Corrida")
-    plt.show()
-
-def desenhar_vetores(vetores):
-    fig, ax = plt.subplots()
-    ax.set_xlim(-5, 25)
-    ax.set_ylim(-15, 15)
-    ax.set_aspect('equal')  # Manter a proporção dos eixos
-    ax.axis('off')  # Opcional: remover os eixos para destacar a pista
-
-    # Desenhar a pista de corrida
-    desenhar_pista(ax)
-
-    # Plotar vetores
-    for vetor in vetores:
-        ax.quiver(vetor.ponto_a.x, vetor.ponto_a.y,
-                  vetor.ponto_b.x - vetor.ponto_a.x,
-                  vetor.ponto_b.y - vetor.ponto_a.y,
-                  angles='xy', scale_units='xy', scale=1, color='r')
-        # Calcular posição média para exibir o nome do vetor
-        mid_x = (vetor.ponto_a.x + vetor.ponto_b.x) / 2
-        mid_y = (vetor.ponto_a.y + vetor.ponto_b.y) / 2
-        label = vetor.name if vetor.name else ''
-        ax.text(mid_x, mid_y, label)
-
-    plt.title("Plano de Vetores com Pista de Corrida")
-    plt.show()
-
-def desenhar_pontos_vetores(pontos, vetores):
-    fig, ax = plt.subplots()
-    ax.set_xlim(-5, 25)
-    ax.set_ylim(-15, 15)
-    ax.set_aspect('equal')  # Manter a proporção dos eixos
-    ax.axis('off')  # Opcional: remover os eixos para destacar a pista
-
-    # Desenhar a pista de corrida
-    desenhar_pista(ax)
-
-    # Plotar pontos
-    for ponto in pontos:
-        ax.plot(ponto.x, ponto.y, 'bo')  # pontos azuis
-        label = f'{ponto.name}({ponto.x}, {ponto.y})' if ponto.name else f'({ponto.x}, {ponto.y})'
-        ax.text(ponto.x + 0.5, ponto.y + 0.5, label)
-
-    # Plotar vetores
-    for vetor in vetores:
-        ax.quiver(0, 0, vetor.ponto_b.x, vetor.ponto_b.y, angles='xy', scale_units='xy', scale=1, color='r')
-        # Exibir o nome do vetor próximo à sua extremidade
-        label = vetor.name if vetor.name else ''
-        ax.text(vetor.ponto_b.x, vetor.ponto_b.y, label)
-
-    plt.title("Plano de Pontos e Vetores com Pista de Corrida")
-    plt.show()
+def desenhar_vetor_no_canvas(vetor, canvas):
+    x_start, y_start = transform_coords(vetor.ponto_a.x, vetor.ponto_a.y)
+    x_end, y_end = transform_coords(vetor.ponto_b.x, vetor.ponto_b.y)
+    # Desenhar o vetor no canvas
+    linha = canvas.create_line(x_start, y_start, x_end, y_end, fill='red', width=2, arrow=tk.LAST)
+    # Calcular posição média para exibir o nome do vetor
+    mid_x = (x_start + x_end) / 2
+    mid_y = (y_start + y_end) / 2
+    label = vetor.name if vetor.name else ''
+    texto = canvas.create_text(mid_x, mid_y - 10, text=label, fill='black')
+    return linha, texto
 
 def main():
     plan = Plan()  # Inicializando o plano
@@ -207,16 +153,10 @@ def main():
     frame_direita = tk.Frame(frame_pv_main)
     frame_direita.pack(side='right', fill='both', expand=True)
 
-    # Seção Esquerda: Canvases
-    label_canvas_pontos = tk.Label(frame_esquerda, text="Plano de Pontos")
-    label_canvas_pontos.pack()
-    canvas_pontos_pv = Canvas(criar_canvas(frame_esquerda))
-    indices_pontos_canvas_pv = []
-
-    label_canvas_vetores = tk.Label(frame_esquerda, text="Plano de Vetores")
-    label_canvas_vetores.pack()
-    canvas_vetores_pv = Canvas(criar_canvas(frame_esquerda))
-    indices_vetores_canvas_pv = []
+    # Seção Esquerda: Canvas
+    label_canvas_pv = tk.Label(frame_esquerda, text="Plano de Pontos e Vetores")
+    label_canvas_pv.pack()
+    canvas_pv = CanvasWrapper(criar_canvas(frame_esquerda))
 
     # Seção Direita: Inputs e Listas com Scrollbar
     # Criar um canvas para permitir a rolagem
@@ -289,30 +229,10 @@ def main():
     # Listas para armazenar pontos e vetores desta aba
     pontos_pv = []
     vetores_pv = []
+    objetos_pontos_canvas = []
+    objetos_vetores_canvas = []
 
     # ------------------- Funções para Pontos e Vetores ------------------- #
-
-    def desenhar_vetor_no_canvas(vetor, canvas) -> int:
-        mid_x = canvas_width / 2
-        mid_y = canvas_height / 2
-        scale = 20  # Escala para o plano de 6x6
-
-        return canvas.create_line(mid_x + vetor.ponto_a.x * scale, mid_y - vetor.ponto_a.y * scale,
-                        mid_x + vetor.ponto_b.x * scale, mid_y - vetor.ponto_b.y * scale, fill='red', width=2)
-            
-    def desenhar_ponto_no_canvas(ponto, canvas) -> str:
-        mid_x = canvas_width / 2
-        mid_y = canvas_height / 2
-        scale = 20  # Escala para o plano de 6x6
-
-        # Desenhar o ponto no canvas
-        circulo = canvas.create_oval(mid_x + ponto.x * scale - 5, mid_y - ponto.y * scale - 5,
-                        mid_x + ponto.x * scale + 5, mid_y - ponto.y * scale + 5,
-                        fill='blue')
-        label = f'{ponto.name}({ponto.x}, {ponto.y})' if ponto.name else f'({ponto.x}, {ponto.y})'
-        texto = canvas.create_text(mid_x + ponto.x * scale + 8, mid_y - ponto.y * scale, text=label, fill='black')
-        
-        return str(str(circulo) + "-" + str(texto))
 
     def adicionar_pv():
         nonlocal qtd_pontos, qtd_vetores, editando_vetor, editando_ponto, indice_vetor_editando, indice_ponto_editando
@@ -320,7 +240,7 @@ def main():
         if not input_text:
             messagebox.showerror("Erro", "Insira um ponto ou vetor no formato correto.")
             return
-        
+
         try:
             if '=' in input_text:
                 # Vetor no formato Nome=(x,y)
@@ -330,7 +250,7 @@ def main():
                 x_str, y_str = coords.split(',')
                 x = float(x_str)
                 y = float(y_str)
-                
+
                 vetor = Vector(Point(0, 0), Point(x, y), name=nome)
 
                 if editando_vetor:
@@ -339,26 +259,23 @@ def main():
                     btn_adicionar_pv.config(text="Adicionar")
                     editando_vetor = False
                     indice_vetor_editando = None
-                    
-                    for n in indices_vetores_canvas_pv:
-                        canvas_vetores_pv.plano.delete(n)
-                    
-                    indices_vetores_canvas_pv.clear()    
-                    
-                    for v in vetores_pv:
-                        indices_vetores_canvas_pv.append(desenhar_vetor_no_canvas(v, canvas_vetores_pv.plano))
-                
-                else:  
+
+                    # Atualizar o desenho no canvas
+                    atualizar_canvas_vetores()
+
+                else:
                     if qtd_vetores >= 4:
                         messagebox.showerror("Erro", "Limite de 4 vetores atingido.")
                         return
-                    
+
                     vetores_pv.append(vetor)
-                    indices_vetores_canvas_pv.append(desenhar_vetor_no_canvas(vetor, canvas_vetores_pv.plano))
                     qtd_vetores += 1
                     messagebox.showinfo("Sucesso", f"Vetor {nome}({x}, {y}) adicionado.")
 
-                
+                    # Desenhar o vetor no canvas
+                    linha, texto = desenhar_vetor_no_canvas(vetor, canvas_pv.plano)
+                    objetos_vetores_canvas.append((linha, texto))
+
                 atualizar_lista_pv_vetores()
             else:
                 # Ponto no formato Nome(x,y)
@@ -368,7 +285,7 @@ def main():
                 x_str, y_str = coords.split(',')
                 x = float(x_str)
                 y = float(y_str)
-                
+
                 ponto = Point(x, y, name=nome)
 
                 if editando_ponto:
@@ -377,29 +294,24 @@ def main():
                     btn_adicionar_pv.config(text="Adicionar")
                     editando_ponto = False
                     indice_ponto_editando = None
-                    
-                    for n in indices_pontos_canvas_pv:
-                        formatAndText = str.split(n, "-")
-                        canvas_pontos_pv.plano.delete(formatAndText[0])
-                        canvas_pontos_pv.plano.delete(formatAndText[1])
-                    
-                    indices_pontos_canvas_pv.clear()    
-                    
-                    for p in pontos_pv:
-                        indices_pontos_canvas_pv.append(desenhar_ponto_no_canvas(p, canvas_pontos_pv.plano))
 
-                    
-                else: 
+                    # Atualizar o desenho no canvas
+                    atualizar_canvas_pontos()
+
+                else:
                     if qtd_pontos >= 5:
                         messagebox.showerror("Erro", "Limite de 5 pontos atingido.")
                         return
-                    
+
                     pontos_pv.append(ponto)
-                    indices_pontos_canvas_pv.append(desenhar_ponto_no_canvas(ponto, canvas_pontos_pv.plano))
                     qtd_pontos += 1
 
                     messagebox.showinfo("Sucesso", f"Ponto {nome}({x}, {y}) adicionado.")
-                
+
+                    # Desenhar o ponto no canvas
+                    circulo, texto = desenhar_ponto_no_canvas(ponto, canvas_pv.plano)
+                    objetos_pontos_canvas.append((circulo, texto))
+
                 atualizar_lista_pv_pontos()
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao processar a entrada: {e}")
@@ -420,6 +332,27 @@ def main():
             nome = vetor.name if vetor.name else ''
             listbox_pv_vetores.insert(tk.END, f"{i+1}: {nome}({dx}, {dy})")
 
+    def atualizar_canvas_pontos():
+        # Remover todos os pontos do canvas
+        for obj in objetos_pontos_canvas:
+            canvas_pv.plano.delete(obj[0])
+            canvas_pv.plano.delete(obj[1])
+        objetos_pontos_canvas.clear()
+        # Redesenhar todos os pontos
+        for ponto in pontos_pv:
+            circulo, texto = desenhar_ponto_no_canvas(ponto, canvas_pv.plano)
+            objetos_pontos_canvas.append((circulo, texto))
+
+    def atualizar_canvas_vetores():
+        # Remover todos os vetores do canvas
+        for obj in objetos_vetores_canvas:
+            canvas_pv.plano.delete(obj[0])
+            canvas_pv.plano.delete(obj[1])
+        objetos_vetores_canvas.clear()
+        # Redesenhar todos os vetores
+        for vetor in vetores_pv:
+            linha, texto = desenhar_vetor_no_canvas(vetor, canvas_pv.plano)
+            objetos_vetores_canvas.append((linha, texto))
 
     def editar_pv_ponto():
         nonlocal editando_ponto, indice_ponto_editando
@@ -430,13 +363,12 @@ def main():
         index = selected_index[0]
 
         ponto = pontos_pv[index]
-        entry_input.insert(0, str(ponto.name + "(") + str(ponto.x) + "," + str(ponto.y) + ")")
-        
+        entry_input.insert(0, f"{ponto.name}({ponto.x},{ponto.y})")
+
         btn_adicionar_pv.config(text="Atualizar Ponto")
 
         editando_ponto = True
         indice_ponto_editando = index
-        
 
     def editar_pv_vetor():
         nonlocal editando_vetor, indice_vetor_editando
@@ -447,13 +379,13 @@ def main():
         index = selected_index[0]
 
         vetor = vetores_pv[index]
-        entry_input.insert(0, str(vetor.name + "=(") + str(vetor.ponto_b.x) + "," + str(vetor.ponto_b.y) + ")")
-        
+        entry_input.insert(0, f"{vetor.name}=({vetor.ponto_b.x},{vetor.ponto_b.y})")
+
         btn_adicionar_pv.config(text="Atualizar Vetor")
 
         editando_vetor = True
         indice_vetor_editando = index
-                
+
     def deletar_pv_ponto():
         nonlocal qtd_pontos
         selected_index = listbox_pv_pontos.curselection()
@@ -464,16 +396,7 @@ def main():
         del pontos_pv[index]
         qtd_pontos -= 1
 
-        for n in indices_pontos_canvas_pv:
-            formatAndText = str.split(n, "-")
-            canvas_pontos_pv.plano.delete(formatAndText[0])
-            canvas_pontos_pv.plano.delete(formatAndText[1])
-        
-        indices_pontos_canvas_pv.clear()    
-        
-        for p in pontos_pv:
-            indices_pontos_canvas_pv.append(desenhar_ponto_no_canvas(p, canvas_pontos_pv.plano))
-                
+        atualizar_canvas_pontos()
         atualizar_lista_pv_pontos()
 
     def deletar_pv_vetor():
@@ -485,22 +408,15 @@ def main():
         index = selected_index[0]
         del vetores_pv[index]
         qtd_vetores -= 1
-        
-        for n in indices_vetores_canvas_pv:
-            canvas_vetores_pv.plano.delete(n)
-                    
-        indices_vetores_canvas_pv.clear()    
-                    
-        for v in vetores_pv:
-            indices_vetores_canvas_pv.append(desenhar_vetor_no_canvas(v, canvas_vetores_pv.plano))
-            
+
+        atualizar_canvas_vetores()
         atualizar_lista_pv_vetores()
 
     def exibir_plano_pv():
         if qtd_pontos == 0 and qtd_vetores == 0:
             messagebox.showerror("Erro", "Adicione pelo menos um ponto ou vetor.")
             return
-        desenhar_pontos_vetores(pontos_pv, vetores_pv)
+        # Já estamos desenhando no canvas em tempo real
 
     root.mainloop()
 
