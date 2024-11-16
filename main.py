@@ -9,8 +9,8 @@ from vector import Vector
 from plan import Plan
 
 # Dimensões do canvas
-canvas_width = 600
-canvas_height = 600
+canvas_width = 800
+canvas_height = 800
 scale = 20  # Escala para converter unidades de coordenadas para pixels
 
 # Ponto médio do canvas
@@ -31,7 +31,32 @@ def criar_canvas(aba):
     canvas = tk.Canvas(aba, width=canvas_width, height=canvas_height, bg='white')
     canvas.pack(expand=True, fill='both')
     desenhar_pista(canvas)
+    desenhar_grade(canvas)
     return canvas
+
+def desenhar_grade(canvas):
+    # Desenhar linhas de grade
+    cor_grade = '#cccccc'
+    
+    # Desenhar linhas de grade verticais
+    for x in range(-int(canvas_width / (2 * scale)), int(canvas_width / (2 * scale)) + 1):
+        x_canvas, _ = transform_coords(x, 0)
+        canvas.create_line(
+            x_canvas, 0, x_canvas, canvas_height,
+            fill=cor_grade,
+            width=1,
+            dash=(2, 4)  # Opcional: linhas tracejadas para suavizar a aparência
+        )
+    
+    # Desenhar linhas de grade horizontais
+    for y in range(-int(canvas_height / (2 * scale)), int(canvas_height / (2 * scale)) + 1):
+        _, y_canvas = transform_coords(0, y)
+        canvas.create_line(
+            0, y_canvas, canvas_width, y_canvas,
+            fill=cor_grade,
+            width=1,
+            dash=(2, 4)  # Opcional: linhas tracejadas para suavizar a aparência
+        )
 
 # Função para desenhar a pista de corrida personalizada no canvas do Tkinter
 def desenhar_pista(canvas):
@@ -41,23 +66,23 @@ def desenhar_pista(canvas):
     # 1. Reta inicial de (0,0) até (0,5)
     x1, y1 = transform_coords(0, 0)
     x2, y2 = transform_coords(0, 5)
-    canvas.create_line(x1, y1, x2, y2, fill='gray', width=20, capstyle='round')
+    canvas.create_line(x1, y1, x2, y2, fill='gray', width=80, capstyle='round')
     pista_coords.append((x1, y1))
     pista_coords.append((x2, y2))
 
     # 2. Reta de (0,5) até (5,10)
     x3, y3 = transform_coords(5, 10)
-    canvas.create_line(x2, y2, x3, y3, fill='gray', width=20, capstyle='round')
+    canvas.create_line(x2, y2, x3, y3, fill='gray', width=80, capstyle='round')
     pista_coords.append((x3, y3))
 
     # 3. Reta de (5,10) até (10,10)
     x4, y4 = transform_coords(10, 10)
-    canvas.create_line(x3, y3, x4, y4, fill='gray', width=20, capstyle='round')
+    canvas.create_line(x3, y3, x4, y4, fill='gray', width=80, capstyle='round')
     pista_coords.append((x4, y4))
 
     # 4. Reta de (10,10) até (10,-5)
     x5, y5 = transform_coords(10, -5)
-    canvas.create_line(x4, y4, x5, y5, fill='gray', width=20, capstyle='round')
+    canvas.create_line(x4, y4, x5, y5, fill='gray', width=80, capstyle='round')
     pista_coords.append((x5, y5))
 
     # 5. Curva final retornando ao ponto de largada (0,0)
@@ -71,7 +96,7 @@ def desenhar_pista(canvas):
         centro_y + raio
     ]
     # Desenhar arco (semicírculo)
-    canvas.create_arc(bbox, start=0, extent=-180, style=tk.ARC, outline='gray', width=20)
+    canvas.create_arc(bbox, start=0, extent=-180, style=tk.ARC, outline='gray', width=80)
     # Adicionar pontos da curva para a linha central
     angulos = np.linspace(0, np.pi, 100)
     curva_x = centro_x + raio * np.cos(angulos) 
@@ -81,7 +106,7 @@ def desenhar_pista(canvas):
     # 5. Reta final de (0,-5) até (0,0)
     x1, y1 = transform_coords(0, -5)
     x2, y2 = transform_coords(0, 0)
-    canvas.create_line(x1, y1, x2, y2, fill='gray', width=20, capstyle='round')
+    canvas.create_line(x1, y1, x2, y2, fill='gray', width=80, capstyle='round')
     pista_coords.append((x1, y1))
     pista_coords.append((x2, y2))
 
@@ -94,8 +119,8 @@ def desenhar_pista(canvas):
         )
 
     # Desenhar linha de largada
-    x_start1, y_start1 = transform_coords(-0.5, 0)
-    x_start2, y_start2 = transform_coords(0.5, 0)
+    x_start1, y_start1 = transform_coords(2, 0)
+    x_start2, y_start2 = transform_coords(-2, 0)
     canvas.create_line(x_start1, y_start1, x_start2, y_start2, fill='black', width=5)
 
 def desenhar_ponto_no_canvas(ponto, canvas):
