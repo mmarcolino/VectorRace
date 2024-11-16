@@ -7,6 +7,7 @@ import numpy as np  # Necessário para trabalhar com arrays numéricos
 from point import Point
 from vector import Vector
 from plan import Plan
+from car import Car
 
 # Dimensões do canvas
 canvas_width = 800
@@ -150,14 +151,7 @@ def main():
     root.title("Inserção de Pontos e Vetores")
 
     # Contadores para limitar pontos e vetores
-    qtd_pontos = 0
     qtd_vetores = 0
-
-    # Variáveis para controlar o modo de edição
-    editando_ponto = False
-    editando_vetor = False
-    indice_ponto_editando = None
-    indice_vetor_editando = None
 
     # Criar o notebook (abas)
     notebook = ttk.Notebook(root)
@@ -225,12 +219,6 @@ def main():
     listbox_pv_pontos = tk.Listbox(frame_pv_pontos)
     listbox_pv_pontos.pack(expand=1, fill='both')
 
-    btn_editar_pv_ponto = tk.Button(frame_pv_pontos, text="Editar Ponto", command=lambda: editar_pv_ponto())
-    btn_editar_pv_ponto.pack(pady=5)
-
-    btn_deletar_pv_ponto = tk.Button(frame_pv_pontos, text="Deletar Ponto", command=lambda: deletar_pv_ponto())
-    btn_deletar_pv_ponto.pack(pady=5)
-
     # Lista de Vetores
     frame_pv_vetores = tk.Frame(frame_pv_lists)
     frame_pv_vetores.pack(side='right', fill='both', expand=True, padx=5)
@@ -241,16 +229,6 @@ def main():
     listbox_pv_vetores = tk.Listbox(frame_pv_vetores)
     listbox_pv_vetores.pack(expand=1, fill='both')
 
-    btn_editar_pv_vetor = tk.Button(frame_pv_vetores, text="Editar Vetor", command=lambda: editar_pv_vetor())
-    btn_editar_pv_vetor.pack(pady=5)
-
-    btn_deletar_pv_vetor = tk.Button(frame_pv_vetores, text="Deletar Vetor", command=lambda: deletar_pv_vetor())
-    btn_deletar_pv_vetor.pack(pady=5)
-
-    # Botão para exibir o plano
-    btn_exibir_pv = tk.Button(frame_direita_conteudo, text="Exibir Plano", command=lambda: exibir_plano_pv())
-    btn_exibir_pv.pack(pady=5)
-
     # Listas para armazenar pontos e vetores desta aba
     pontos_pv = []
     vetores_pv = []
@@ -259,85 +237,45 @@ def main():
 
     # ------------------- Funções para Pontos e Vetores ------------------- #
 
+    def update_car_on_canvas(car: Car):
+        # Remove the old car representation
+        # Find and remove the car's previous drawing
+        for obj in objetos_pontos_canvas:
+            if obj[1] == car.position.name:
+                canvas_pv.plano.delete(obj[0])
+                canvas_pv.plano.delete(obj[1])
+                objetos_pontos_canvas.remove(obj)
+                break
+        # Draw the new position
+        circulo, texto = desenhar_ponto_no_canvas(car.position, canvas_pv.plano)
+        objetos_pontos_canvas.append((circulo, texto))
+        
     def adicionar_pv():
-        nonlocal qtd_pontos, qtd_vetores, editando_vetor, editando_ponto, indice_vetor_editando, indice_ponto_editando
+        nonlocal qtd_vetores
         input_text = entry_input.get().strip()
         if not input_text:
             messagebox.showerror("Erro", "Insira um ponto ou vetor no formato correto.")
             return
 
         try:
-            if '=' in input_text:
-                # Vetor no formato Nome=(x,y)
-                var_name, coords = input_text.split('=')
-                nome = var_name.strip()
-                coords = coords.strip().strip('()')
-                x_str, y_str = coords.split(',')
-                x = float(x_str)
-                y = float(y_str)
+            # Vetor no formato Nome=(x,y)
+            var_name, coords = input_text.split('=')
+            nome = var_name.strip()
+            coords = coords.strip().strip('()')
+            x_str, y_str = coords.split(',')
+            x = float(x_str)
+            y = float(y_str)
 
-                vetor = Vector(Point(0, 0), Point(x, y), name=nome)
+            vetor = Vector(Point(0, 0), Point(x, y), name=nome)
 
-                if editando_vetor:
-                    vetores_pv[indice_vetor_editando] = vetor
-                    messagebox.showinfo("Sucesso", "Vetor atualizado.")
-                    btn_adicionar_pv.config(text="Adicionar")
-                    editando_vetor = False
-                    indice_vetor_editando = None
+            vetores_pv.append(vetor)
+            qtd_vetores += 1
 
-                    # Atualizar o desenho no canvas
-                    atualizar_canvas_vetores()
+            # Desenhar o vetor no canvas
+            linha, texto = desenhar_vetor_no_canvas(vetor, canvas_pv.plano)
+            objetos_vetores_canvas.append((linha, texto))
 
-                else:
-                    if qtd_vetores >= 4:
-                        messagebox.showerror("Erro", "Limite de 4 vetores atingido.")
-                        return
-
-                    vetores_pv.append(vetor)
-                    qtd_vetores += 1
-                    messagebox.showinfo("Sucesso", f"Vetor {nome}({x}, {y}) adicionado.")
-
-                    # Desenhar o vetor no canvas
-                    linha, texto = desenhar_vetor_no_canvas(vetor, canvas_pv.plano)
-                    objetos_vetores_canvas.append((linha, texto))
-
-                atualizar_lista_pv_vetores()
-            else:
-                # Ponto no formato Nome(x,y)
-                var_name, coords = input_text.split('(')
-                nome = var_name.strip()
-                coords = coords.strip().strip(')')
-                x_str, y_str = coords.split(',')
-                x = float(x_str)
-                y = float(y_str)
-
-                ponto = Point(x, y, name=nome)
-
-                if editando_ponto:
-                    pontos_pv[indice_ponto_editando] = ponto
-                    messagebox.showinfo("Sucesso", "Ponto atualizado.")
-                    btn_adicionar_pv.config(text="Adicionar")
-                    editando_ponto = False
-                    indice_ponto_editando = None
-
-                    # Atualizar o desenho no canvas
-                    atualizar_canvas_pontos()
-
-                else:
-                    if qtd_pontos >= 5:
-                        messagebox.showerror("Erro", "Limite de 5 pontos atingido.")
-                        return
-
-                    pontos_pv.append(ponto)
-                    qtd_pontos += 1
-
-                    messagebox.showinfo("Sucesso", f"Ponto {nome}({x}, {y}) adicionado.")
-
-                    # Desenhar o ponto no canvas
-                    circulo, texto = desenhar_ponto_no_canvas(ponto, canvas_pv.plano)
-                    objetos_pontos_canvas.append((circulo, texto))
-
-                atualizar_lista_pv_pontos()
+            atualizar_lista_pv_vetores()
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao processar a entrada: {e}")
         finally:
@@ -357,93 +295,39 @@ def main():
             nome = vetor.name if vetor.name else ''
             listbox_pv_vetores.insert(tk.END, f"{i+1}: {nome}({dx}, {dy})")
 
-    def atualizar_canvas_pontos():
-        # Remover todos os pontos do canvas
-        for obj in objetos_pontos_canvas:
-            canvas_pv.plano.delete(obj[0])
-            canvas_pv.plano.delete(obj[1])
-        objetos_pontos_canvas.clear()
-        # Redesenhar todos os pontos
-        for ponto in pontos_pv:
-            circulo, texto = desenhar_ponto_no_canvas(ponto, canvas_pv.plano)
-            objetos_pontos_canvas.append((circulo, texto))
+    player1_car = Car(position=Point(-1, 0, name="Player 1"), name="Player 1")
+    player2_car = Car(position=Point(1, 0, name="Player 2"), name="Player 2")
 
-    def atualizar_canvas_vetores():
-        # Remover todos os vetores do canvas
-        for obj in objetos_vetores_canvas:
-            canvas_pv.plano.delete(obj[0])
-            canvas_pv.plano.delete(obj[1])
-        objetos_vetores_canvas.clear()
-        # Redesenhar todos os vetores
-        for vetor in vetores_pv:
-            linha, texto = desenhar_vetor_no_canvas(vetor, canvas_pv.plano)
-            objetos_vetores_canvas.append((linha, texto))
+    cars = [player1_car, player2_car]
 
-    def editar_pv_ponto():
-        nonlocal editando_ponto, indice_ponto_editando
-        selected_index = listbox_pv_pontos.curselection()
-        if not selected_index:
-            messagebox.showerror("Erro", "Selecione um ponto para editar.")
-            return
-        index = selected_index[0]
+    for car in cars:
+        circulo, texto = desenhar_ponto_no_canvas(car.position, canvas_pv.plano)
+        objetos_pontos_canvas.append((circulo, texto))
 
-        ponto = pontos_pv[index]
-        entry_input.insert(0, f"{ponto.name}({ponto.x},{ponto.y})")
+    pontos_pv = [car.position for car in cars]
+    atualizar_lista_pv_pontos()
 
-        btn_adicionar_pv.config(text="Atualizar Ponto")
 
-        editando_ponto = True
-        indice_ponto_editando = index
+    def handle_player_input(car: Car):
+        input_text = simpledialog.askstring("Input", f"{car.name}, enter your speed vector (dx,dy):")
+        if input_text:
+            try:
+                dx_str, dy_str = input_text.strip().strip('()').split(',')
+                dx = float(dx_str)
+                dy = float(dy_str)
+                new_speed = Vector(Point(0, 0), Point(dx, dy))
+                car.update_speed(new_speed)
+                car.move()
+                # Update the car's position on the canvas
+                update_car_on_canvas(car)
+            except Exception as e:
+                messagebox.showerror("Error", f"Invalid input: {e}")
+                car.has_lost_turn = True
+        else:
+            car.has_lost_turn = True
+            print(f"{car.name} did not enter a speed vector and loses the turn.")
 
-    def editar_pv_vetor():
-        nonlocal editando_vetor, indice_vetor_editando
-        selected_index = listbox_pv_vetores.curselection()
-        if not selected_index:
-            messagebox.showerror("Erro", "Selecione um vetor para editar.")
-            return
-        index = selected_index[0]
-
-        vetor = vetores_pv[index]
-        entry_input.insert(0, f"{vetor.name}=({vetor.ponto_b.x},{vetor.ponto_b.y})")
-
-        btn_adicionar_pv.config(text="Atualizar Vetor")
-
-        editando_vetor = True
-        indice_vetor_editando = index
-
-    def deletar_pv_ponto():
-        nonlocal qtd_pontos
-        selected_index = listbox_pv_pontos.curselection()
-        if not selected_index:
-            messagebox.showerror("Erro", "Selecione um ponto para deletar.")
-            return
-        index = selected_index[0]
-        del pontos_pv[index]
-        qtd_pontos -= 1
-
-        atualizar_canvas_pontos()
-        atualizar_lista_pv_pontos()
-
-    def deletar_pv_vetor():
-        nonlocal qtd_vetores
-        selected_index = listbox_pv_vetores.curselection()
-        if not selected_index:
-            messagebox.showerror("Erro", "Selecione um vetor para deletar.")
-            return
-        index = selected_index[0]
-        del vetores_pv[index]
-        qtd_vetores -= 1
-
-        atualizar_canvas_vetores()
-        atualizar_lista_pv_vetores()
-
-    def exibir_plano_pv():
-        if qtd_pontos == 0 and qtd_vetores == 0:
-            messagebox.showerror("Erro", "Adicione pelo menos um ponto ou vetor.")
-            return
-        # Já estamos desenhando no canvas em tempo real
-
+            
     root.mainloop()
-
 if __name__ == "__main__":
     main()
