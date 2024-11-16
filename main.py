@@ -1,5 +1,3 @@
-# main.py
-
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
@@ -9,7 +7,7 @@ from vector import Vector
 from plan import Plan
 from car import Car
 
-# Dimensões do canvas
+#Dimensões do canvas
 canvas_width = 800
 canvas_height = 800
 scale = 20  # Escala para converter unidades de coordenadas para pixels
@@ -61,29 +59,36 @@ def desenhar_grade(canvas):
 
 # Função para desenhar a pista de corrida personalizada no canvas do Tkinter
 def desenhar_pista(canvas):
+    global ids_pista, largada  # IDs das linhas da pista
+    ids_pista = []
+
     # Lista de pontos da pista
     pista_coords = []
 
     # 1. Reta inicial de (0,0) até (0,5)
     x1, y1 = transform_coords(0, 0)
     x2, y2 = transform_coords(0, 5)
-    canvas.create_line(x1, y1, x2, y2, fill='gray', width=80, capstyle='round')
+    id = canvas.create_line(x1, y1, x2, y2, fill='gray', width=80, capstyle='round')
+    ids_pista.append(id)
     pista_coords.append((x1, y1))
     pista_coords.append((x2, y2))
 
     # 2. Reta de (0,5) até (5,10)
     x3, y3 = transform_coords(5, 10)
-    canvas.create_line(x2, y2, x3, y3, fill='gray', width=80, capstyle='round')
+    id = canvas.create_line(x2, y2, x3, y3, fill='gray', width=80, capstyle='round')
+    ids_pista.append(id)
     pista_coords.append((x3, y3))
 
     # 3. Reta de (5,10) até (10,10)
     x4, y4 = transform_coords(10, 10)
-    canvas.create_line(x3, y3, x4, y4, fill='gray', width=80, capstyle='round')
+    id = canvas.create_line(x3, y3, x4, y4, fill='gray', width=80, capstyle='round')
+    ids_pista.append(id)
     pista_coords.append((x4, y4))
 
     # 4. Reta de (10,10) até (10,-5)
     x5, y5 = transform_coords(10, -5)
-    canvas.create_line(x4, y4, x5, y5, fill='gray', width=80, capstyle='round')
+    id = canvas.create_line(x4, y4, x5, y5, fill='gray', width=80, capstyle='round')
+    ids_pista.append(id)
     pista_coords.append((x5, y5))
 
     # 5. Curva final retornando ao ponto de largada (0,0)
@@ -97,7 +102,9 @@ def desenhar_pista(canvas):
         centro_y + raio
     ]
     # Desenhar arco (semicírculo)
-    canvas.create_arc(bbox, start=0, extent=-180, style=tk.ARC, outline='gray', width=80)
+    id = canvas.create_arc(bbox, start=0, extent=-180, style=tk.ARC, outline='gray', width=80)
+    ids_pista.append(id)
+
     # Adicionar pontos da curva para a linha central
     angulos = np.linspace(0, np.pi, 100)
     curva_x = centro_x + raio * np.cos(angulos) 
@@ -107,7 +114,9 @@ def desenhar_pista(canvas):
     # 5. Reta final de (0,-5) até (0,0)
     x1, y1 = transform_coords(0, -5)
     x2, y2 = transform_coords(0, 0)
-    canvas.create_line(x1, y1, x2, y2, fill='gray', width=80, capstyle='round')
+    id = canvas.create_line(x1, y1, x2, y2, fill='gray', width=80, capstyle='round')
+    ids_pista.append(id)
+
     pista_coords.append((x1, y1))
     pista_coords.append((x2, y2))
 
@@ -122,7 +131,7 @@ def desenhar_pista(canvas):
     # Desenhar linha de largada
     x_start1, y_start1 = transform_coords(2, 0)
     x_start2, y_start2 = transform_coords(-2, 0)
-    canvas.create_line(x_start1, y_start1, x_start2, y_start2, fill='black', width=5)
+    largada = canvas.create_line(x_start1, y_start1, x_start2, y_start2, fill='black', width=5)
 
 def desenhar_ponto_no_canvas(ponto, canvas):
     x_canvas, y_canvas = transform_coords(ponto.x, ponto.y)
@@ -148,7 +157,7 @@ def main():
     plan = Plan()  # Inicializando o plano
 
     root = tk.Tk()
-    root.title("Inserção de Pontos e Vetores")
+    root.title("Jogo de Corrida")
 
     # Contadores para limitar pontos e vetores
     qtd_vetores = 0
@@ -158,176 +167,186 @@ def main():
     notebook.pack(expand=1, fill='both')
 
     # Criar frames para cada aba
-    frame_pontos_vetores = tk.Frame(notebook)
-    notebook.add(frame_pontos_vetores, text="Pontos e Vetores")
+    frame_jogo = tk.Frame(notebook)
+    notebook.add(frame_jogo, text="Jogo de Corrida")
 
     # Criar o frame principal
-    frame_pv_main = tk.Frame(frame_pontos_vetores)
-    frame_pv_main.pack(expand=1, fill='both')
+    frame_jogo_main = tk.Frame(frame_jogo)
+    frame_jogo_main.pack(expand=1, fill='both')
 
     # Dividir o frame principal em duas seções: esquerda e direita
-    frame_esquerda = tk.Frame(frame_pv_main)
+    frame_esquerda = tk.Frame(frame_jogo_main)
     frame_esquerda.pack(side='left', fill='both', expand=True)
 
-    frame_direita = tk.Frame(frame_pv_main)
+    frame_direita = tk.Frame(frame_jogo_main)
     frame_direita.pack(side='right', fill='both', expand=True)
 
     # Seção Esquerda: Canvas
-    label_canvas_pv = tk.Label(frame_esquerda, text="Plano de Pontos e Vetores")
-    label_canvas_pv.pack()
-    canvas_pv = CanvasWrapper(criar_canvas(frame_esquerda))
+    label_canvas_jogo = tk.Label(frame_esquerda, text="Pista de Corrida")
+    label_canvas_jogo.pack()
+    canvas_jogo = CanvasWrapper(criar_canvas(frame_esquerda))
 
-    # Seção Direita: Inputs e Listas com Scrollbar
-    # Criar um canvas para permitir a rolagem
-    canvas_direita = tk.Canvas(frame_direita)
-    scrollbar_direita = tk.Scrollbar(frame_direita, orient='vertical', command=canvas_direita.yview)
-    canvas_direita.configure(yscrollcommand=scrollbar_direita.set)
+    # Desenhar a pista (por exemplo, linhas de chegada e partida)
+    desenhar_pista(canvas_jogo.plano)
 
-    scrollbar_direita.pack(side='right', fill='y')
-    canvas_direita.pack(side='left', fill='both', expand=True)
+    # Lista de carros
+    carros = []
 
-    # Criar um frame dentro do canvas_direita
-    frame_direita_conteudo = tk.Frame(canvas_direita)
-    canvas_direita.create_window((0, 0), window=frame_direita_conteudo, anchor='nw')
+    # Criar os dois carros
+    player1_car = Car(position=Point(-1, 0, name="Player 1"), name="Player 1")
+    player2_car = Car(position=Point(1, 0, name="Player 2"), name="Player 2")
+    carros.append(player1_car)
+    carros.append(player2_car)
 
-    # Ajustar o tamanho do canvas_direita conforme o conteúdo
-    def atualizar_scroll(event):
-        canvas_direita.configure(scrollregion=canvas_direita.bbox('all'))
+    # Desenhar os carros no canvas
+    objetos_carros_canvas = []
+    for car in carros:
+        circulo, texto = desenhar_ponto_no_canvas(car.position, canvas_jogo.plano)
+        objetos_carros_canvas.append((circulo, texto))
 
-    frame_direita_conteudo.bind('<Configure>', atualizar_scroll)
+    # Seção Direita: Inputs e Informações
+    label_info = tk.Label(frame_direita, text="Informações do Jogo")
+    label_info.pack()
 
-    # Inputs e Botões
-    label_input = tk.Label(frame_direita_conteudo, text="Insira um Ponto ou Vetor (Ex: D(1,2) ou t=(3,4)):")
+    # Frame para informações dos jogadores
+    frame_info_jogadores = tk.Frame(frame_direita)
+    frame_info_jogadores.pack(pady=10)
+
+    # Labels para mostrar informações dos jogadores
+    labels_jogadores = []
+    for car in carros:
+        label = tk.Label(frame_info_jogadores, text=f"{car.name}: Posição ({car.position.x}, {car.position.y}), Velocidade (0,0)")
+        label.pack()
+        labels_jogadores.append(label)
+
+    # Campo de input para o vetor de movimento
+    label_input = tk.Label(frame_direita, text="Insira o vetor de movimento (dx,dy):")
     label_input.pack(pady=5)
-    entry_input = tk.Entry(frame_direita_conteudo)
+    entry_input = tk.Entry(frame_direita)
     entry_input.pack(fill='x')
 
-    btn_adicionar_pv = tk.Button(frame_direita_conteudo, text="Adicionar", command=lambda: adicionar_pv())
-    btn_adicionar_pv.pack(pady=5)
+    # Botão para enviar o movimento
+    btn_mover = tk.Button(frame_direita, text="Mover", command=lambda: mover_carro())
+    btn_mover.pack(pady=5)
 
-    # Listas de Pontos e Vetores
-    frame_pv_lists = tk.Frame(frame_direita_conteudo)
-    frame_pv_lists.pack(fill='both', expand=True, padx=10, pady=10)
+    # Variável para controlar o turno (0 para player1, 1 para player2)
+    turno = [0]
 
-    # Lista de Pontos
-    frame_pv_pontos = tk.Frame(frame_pv_lists)
-    frame_pv_pontos.pack(side='left', fill='both', expand=True, padx=5)
+    # Função para atualizar as informações dos jogadores
+    def atualizar_info_jogadores():
+        for i, car in enumerate(carros):
+            labels_jogadores[i].config(text=f"{car.name}: Posição ({car.position.x}, {car.position.y}), Velocidade ({car.speed.ponto_b.x}, {car.speed.ponto_b.y})")
 
-    label_lista_pv_pontos = tk.Label(frame_pv_pontos, text="Lista de Pontos")
-    label_lista_pv_pontos.pack()
+    # Função para mover o carro
+    def mover_carro():
+        # Obter o carro do jogador atual
+        car = carros[turno[0]]
+        print(turno[0])
 
-    listbox_pv_pontos = tk.Listbox(frame_pv_pontos)
-    listbox_pv_pontos.pack(expand=1, fill='both')
-
-    # Lista de Vetores
-    frame_pv_vetores = tk.Frame(frame_pv_lists)
-    frame_pv_vetores.pack(side='right', fill='both', expand=True, padx=5)
-
-    label_lista_pv_vetores = tk.Label(frame_pv_vetores, text="Lista de Vetores")
-    label_lista_pv_vetores.pack()
-
-    listbox_pv_vetores = tk.Listbox(frame_pv_vetores)
-    listbox_pv_vetores.pack(expand=1, fill='both')
-
-    # Listas para armazenar pontos e vetores desta aba
-    pontos_pv = []
-    vetores_pv = []
-    objetos_pontos_canvas = []
-    objetos_vetores_canvas = []
-
-    # ------------------- Funções para Pontos e Vetores ------------------- #
-
-    def update_car_on_canvas(car: Car):
-        # Remove the old car representation
-        # Find and remove the car's previous drawing
-        for obj in objetos_pontos_canvas:
-            if obj[1] == car.position.name:
-                canvas_pv.plano.delete(obj[0])
-                canvas_pv.plano.delete(obj[1])
-                objetos_pontos_canvas.remove(obj)
-                break
-        # Draw the new position
-        circulo, texto = desenhar_ponto_no_canvas(car.position, canvas_pv.plano)
-        objetos_pontos_canvas.append((circulo, texto))
-        
-    def adicionar_pv():
-        nonlocal qtd_vetores
         input_text = entry_input.get().strip()
         if not input_text:
-            messagebox.showerror("Erro", "Insira um ponto ou vetor no formato correto.")
+            messagebox.showerror("Erro", "Insira um vetor no formato (dx,dy).")
             return
 
         try:
-            # Vetor no formato Nome=(x,y)
-            var_name, coords = input_text.split('=')
-            nome = var_name.strip()
-            coords = coords.strip().strip('()')
-            x_str, y_str = coords.split(',')
-            x = float(x_str)
-            y = float(y_str)
+            dx_str, dy_str = input_text.strip().strip('()').split(',')
+            dx = float(dx_str)
+            dy = float(dy_str)
+            print(dx, dy)
+            new_speed = Vector(Point(0, 0), Point(dx, dy))
 
-            vetor = Vector(Point(0, 0), Point(x, y), name=nome)
+            initial_x = car.position.x
+            initial_y = car.position.y
 
-            vetores_pv.append(vetor)
-            qtd_vetores += 1
+            # Tentar atualizar a velocidade do carro
+            car.update_speed(new_speed)
 
-            # Desenhar o vetor no canvas
-            linha, texto = desenhar_vetor_no_canvas(vetor, canvas_pv.plano)
-            objetos_vetores_canvas.append((linha, texto))
+            if car.has_lost_turn:
+                messagebox.showinfo("Perdeu a Vez", f"{car.name} inseriu um vetor inválido e perdeu a vez!")
+                car.has_lost_turn = False  # Resetar o flag para o próximo turno
+            else:
+                # Mover o carro
+                car.move()
 
-            atualizar_lista_pv_vetores()
-        except Exception as e:
-            messagebox.showerror("Erro", f"Erro ao processar a entrada: {e}")
-        finally:
+                # Verificar colisão com as paredes (implementar a lógica conforme sua pista)
+                if verificar_colisao_parede(car.position):
+                    car.reset_speed_on_collision()
+                    messagebox.showinfo("Colisão", f"{car.name} colidiu com a parede e sua velocidade foi resetada para (0,0)!")
+                elif verificar_colisao_carros(turno[0], car.position): 
+                    car.reset_speed_on_collision()
+                    messagebox.showinfo("Colisão", f"{car.name} colidiu com outro carro e perdeu o turno")
+                    car.position.x = initial_x
+                    car.position.y = initial_y
+                else:
+                    # Atualizar a posição do carro no canvas
+                    atualizar_carro_no_canvas(car, objetos_carros_canvas[turno[0]])
+        
+                    # Verificar se o carro cruzou a linha de chegada
+                    if verificar_linha_chegada(initial_x, initial_y, car.position):
+                        messagebox.showinfo("Vencedor", f"{car.name} cruzou a linha de chegada e venceu a corrida!")
+                        root.destroy()  # Fecha o jogo
+                        return
+
+            # Limpar o campo de input
             entry_input.delete(0, tk.END)
 
-    def atualizar_lista_pv_pontos():
-        listbox_pv_pontos.delete(0, tk.END)
-        for i, ponto in enumerate(pontos_pv):
-            nome = ponto.name if ponto.name else ''
-            listbox_pv_pontos.insert(tk.END, f"{i+1}: {nome}({ponto.x}, {ponto.y})")
+            # Alternar o turno para o próximo jogador
+            turno[0] = (turno[0] + 1) % len(carros)
 
-    def atualizar_lista_pv_vetores():
-        listbox_pv_vetores.delete(0, tk.END)
-        for i, vetor in enumerate(vetores_pv):
-            dx = vetor.ponto_b.x
-            dy = vetor.ponto_b.y
-            nome = vetor.name if vetor.name else ''
-            listbox_pv_vetores.insert(tk.END, f"{i+1}: {nome}({dx}, {dy})")
+            # Atualizar as informações dos jogadores
+            atualizar_info_jogadores()
 
-    player1_car = Car(position=Point(-1, 0, name="Player 1"), name="Player 1")
-    player2_car = Car(position=Point(1, 0, name="Player 2"), name="Player 2")
+        except Exception as e:
+            messagebox.showerror("Erro", f"Entrada inválida: {e}")
 
-    cars = [player1_car, player2_car]
+    # Função para atualizar o carro no canvas
+    def atualizar_carro_no_canvas(car, objetos_canvas):
+        circulo, texto = objetos_canvas
 
-    for car in cars:
-        circulo, texto = desenhar_ponto_no_canvas(car.position, canvas_pv.plano)
-        objetos_pontos_canvas.append((circulo, texto))
+        # Remover o círculo e o texto antigos
+        canvas_jogo.plano.delete(circulo)
+        canvas_jogo.plano.delete(texto)
 
-    pontos_pv = [car.position for car in cars]
-    atualizar_lista_pv_pontos()
+        # Desenhar o novo círculo e texto
+        novo_circulo, novo_texto = desenhar_ponto_no_canvas(car.position, canvas_jogo.plano)
+        objetos_carros_canvas[turno[0]] = (novo_circulo, novo_texto)
 
 
-    def handle_player_input(car: Car):
-        input_text = simpledialog.askstring("Input", f"{car.name}, enter your speed vector (dx,dy):")
-        if input_text:
-            try:
-                dx_str, dy_str = input_text.strip().strip('()').split(',')
-                dx = float(dx_str)
-                dy = float(dy_str)
-                new_speed = Vector(Point(0, 0), Point(dx, dy))
-                car.update_speed(new_speed)
-                car.move()
-                # Update the car's position on the canvas
-                update_car_on_canvas(car)
-            except Exception as e:
-                messagebox.showerror("Error", f"Invalid input: {e}")
-                car.has_lost_turn = True
-        else:
-            car.has_lost_turn = True
-            print(f"{car.name} did not enter a speed vector and loses the turn.")
+    def verificar_colisao_parede(posicao):
+        """Verifica se o carro colidiu com as bordas da pista."""
+        # Converter a posição do carro para coordenadas de canvas
+        x_canvas, y_canvas = transform_coords(posicao.x, posicao.y)
 
-            
+        # Definir uma pequena área ao redor do ponto para verificar colisão
+        overlapping_items = canvas_jogo.plano.find_overlapping(
+            x_canvas, y_canvas,
+            x_canvas, y_canvas
+        )
+
+        # Verificar se algum dos itens sobrepostos é parte das linhas da pista
+        for item in overlapping_items:
+            if item in ids_pista:  # IDs da pista registrados ao desenhar
+                return False  # Colisão detectada
+        return True  # Sem colisão
+
+    def verificar_colisao_carros(index, position):
+        if index == 0:
+            return False
+        print(index, index -1)
+        if position.x == carros[index-1].position.x and  position.y == carros[index-1].position.y:
+            return True
+
+
+    def verificar_linha_chegada(x_inicial, y_inicial, posicao):
+        # Verifica se os pontos inicial e final estão na faixa de x entre -2 e 2
+        if (-2 <= x_inicial <= 2) and (-2 <= posicao.x <= 2):
+            # Verifica se houve cruzamento no eixo y, de negativo para positivo
+            if y_inicial < 0.0 and posicao.y >= 0.0:
+                return True
+
+        return False
+
     root.mainloop()
+
 if __name__ == "__main__":
     main()
