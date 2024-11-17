@@ -232,10 +232,27 @@ def main():
     # Variável para controlar o turno (0 para player1, 1 para player2)
     turno = [0]
 
+    # Campo para mostrar de qual jogador é a vez
+    label_vez_jogadores = []
+    for car in carros:
+        label = tk.Label(frame_direita, text=f"{car.name}")
+        label.pack(pady=5)
+        label_vez_jogadores.append(label)
+    
+    label_vez_jogadores[0].config(text=f"+ {carros[0].name}")
+
     # Função para atualizar as informações dos jogadores
     def atualizar_info_jogadores():
         for i, car in enumerate(carros):
             labels_jogadores[i].config(text=f"{car.name}: Posição ({car.position.x}, {car.position.y}), Velocidade ({car.speed.ponto_b.x}, {car.speed.ponto_b.y})")
+    
+    def atualizar_vez_jogador(jogador):
+        if jogador - 1 < 0:
+            label_vez_jogadores[0].config(text=f"{carros[0].name}")
+            label_vez_jogadores[1].config(text=f"+ {carros[1].name}")
+        else:
+            label_vez_jogadores[1].config(text=f"{carros[1].name}")
+            label_vez_jogadores[0].config(text=f"+ {carros[0].name}")
 
     # Função para mover o carro
     def mover_carro():
@@ -290,11 +307,14 @@ def main():
             # Limpar o campo de input
             entry_input.delete(0, tk.END)
 
+            # Muda a vez do jogador
+            atualizar_vez_jogador(turno[0])
+
             # Alternar o turno para o próximo jogador
             turno[0] = (turno[0] + 1) % len(carros)
 
             # Atualizar as informações dos jogadores
-            atualizar_info_jogadores()
+            atualizar_info_jogadores()            
 
         except Exception as e:
             messagebox.showerror("Erro", f"Entrada inválida: {e}")
