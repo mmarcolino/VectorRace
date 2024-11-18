@@ -254,6 +254,26 @@ def main():
             label_vez_jogadores[1].config(text=f"{carros[1].name}")
             label_vez_jogadores[0].config(text=f"+ {carros[0].name}")
 
+    def desenhar_vetor_de_velocidade(car, canvas):
+        """Desenha o vetor de velocidade do jogador no canvas, com o centro (0,0) no ponto do jogador."""
+        # O ponto inicial do vetor será sempre a posição atual do carro
+        ponto_origem = car.position
+        
+        # O ponto final do vetor é determinado pela velocidade do carro
+        dx = car.speed.ponto_b.x
+        dy = car.speed.ponto_b.y
+        ponto_final = Point(ponto_origem.x + dx, ponto_origem.y + dy)
+
+        # Converter coordenadas matemáticas para coordenadas do canvas
+        x_start, y_start = transform_coords(ponto_origem.x, ponto_origem.y)
+        x_end, y_end = transform_coords(ponto_final.x, ponto_final.y)
+
+        # Desenhar o vetor
+        vetor_id = canvas.create_line(x_start, y_start, x_end, y_end, fill='red', width=2, arrow=tk.LAST)
+
+        # Retorna o ID do vetor para futura manipulação (remoção/atualização)
+        return vetor_id
+    
     # Função para mover o carro
     def mover_carro():
         # Obter o carro do jogador atual
@@ -297,6 +317,14 @@ def main():
                 else:
                     # Atualizar a posição do carro no canvas
                     atualizar_carro_no_canvas(car, objetos_carros_canvas[turno[0]])
+
+                    # Remover o vetor anterior, se existir
+                    if hasattr(car, 'vetor_id') and car.vetor_id is not None:
+                        canvas_jogo.plano.delete(car.vetor_id)
+
+                    # Desenhar o novo vetor de velocidade
+                    car.vetor_id = desenhar_vetor_de_velocidade(car, canvas_jogo.plano)
+
         
                     # Verificar se o carro cruzou a linha de chegada
                     if verificar_linha_chegada(initial_x, initial_y, car.position):
